@@ -10,9 +10,9 @@ timestamp,event,confidence,track_id,class_name,bearing,proximity,old_value,new_v
 2.6,enemy_detected,0.521,18,enemy,-27.8,near,,,
 2.9,enemy_disappeared,0.126,18,enemy,-34.0,near,,,
 3.4,player_health_changed,0.859,,,,,80,70,-10
-3.533,enemy_disappeared,0.101,17,enemy,4.5,mid,,,
+3.533,enemy_disappeared,0.158,4,enemy,32.6,near,,,
 3.667,enemy_detected,0.394,18,enemy,-36.2,near,,,
-4.267,enemy_disappeared,0.715,4,enemy,-6.5,near,,,
+4.267,enemy_disappeared,0.715,17,enemy,-6.5,near,,,
 4.3,player_health_changed,0.806,,,,,70,60,-10
 5.233,player_health_changed,0.878,,,,,60,50,-10
 6.133,player_health_changed,0.793,,,,,50,40,-10
@@ -102,11 +102,11 @@ timestamp,event,confidence,track_id,class_name,bearing,proximity,old_value,new_v
 32.067,enemy_detected,0.356,161,enemy,-16.4,mid,,,
 32.067,enemy_detected,0.263,162,enemy,-17.6,mid,,,
 32.1,player_ammo_changed,0.73,,,,,60,59,-1
-32.167,enemy_disappeared,0.189,159,enemy,-42.1,far,,,
 32.367,player_ammo_changed,0.737,,,,,59,56,-3
 32.5,enemy_disappeared,0.473,161,enemy,-18.8,mid,,,
 32.533,enemy_disappeared,0.17,162,enemy,43.7,near,,,
 32.533,player_ammo_changed,0.553,,,,,56,54,-2
+32.633,enemy_disappeared,0.725,159,enemy,-42.9,mid,,,
 32.7,player_ammo_changed,0.77,,,,,54,52,-2
 33.467,enemy_detected,0.841,174,enemy,-27.6,near,,,
 33.533,enemy_disappeared,0.688,174,enemy,-5.7,near,,,
@@ -115,7 +115,7 @@ timestamp,event,confidence,track_id,class_name,bearing,proximity,old_value,new_v
 33.667,enemy_detected,0.444,181,enemy,-16.5,mid,,,
 33.7,enemy_detected,0.786,184,enemy,7.9,mid,,,
 33.867,enemy_disappeared,0.935,160,enemy,30.2,near,,,
+34.233,enemy_disappeared,0.747,180,enemy,28.4,mid,,,
 34.333,enemy_disappeared,0.659,179,enemy,42.8,near,,,
 34.433,enemy_disappeared,0.863,181,enemy,18.9,near,,,
-35.033,enemy_disappeared,0.894,180,enemy,33.1,near,,,
 35.033,enemy_disappeared,0.904,184,enemy,12.6,near,,,

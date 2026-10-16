@@ -214,9 +214,10 @@ def analyze_video(video_path, weights, output_dir, conf=0.1, imgsz=416, read_hud
             hud_state = {"health": hud.health, "ammo": hud.ammo, "raw": reading}
             flash = flashes.update(view, time)
         seen_boxes = {track_id: track.last.bbox for track_id, track in builder.tracks.items()}
-        before = len(builder.events)
+        before_ids = {id(event) for event in builder.events}
         builder.update(frame_index, time, detections, hud_changes, flash=flash)
-        new_events = hud_events + builder.events[before:]
+        new_builder_events = [event for event in builder.events if id(event) not in before_ids]
+        new_events = hud_events + new_builder_events
         recent.extend(new_events)
         for detection in detections:
             display_id = builder.display_id(detection.track_id)
@@ -228,7 +229,7 @@ def analyze_video(video_path, weights, output_dir, conf=0.1, imgsz=416, read_hud
             seen_boxes[display_id] = detection.bbox
         if flash:
             tags.append({"text": "PICKUP FLASH", "bbox": None, "until": time + TAG_SECONDS})
-        for event in builder.events[before:]:
+        for event in new_builder_events:
             label = TAG_TEXT.get(event.event)
             if label is None:
                 continue

@@ -193,6 +193,28 @@ def test_a_fragment_keeps_the_parent_id():
     assert builder.display_id(2) == 1
 
 
+def test_a_new_enemy_does_not_absorb_one_still_in_the_frame():
+    builder = EventBuilder()
+    left = (20, 40, 50, 90)
+    right = (200, 40, 230, 90)
+    frames = [(index, index / 30, [detection(index, index / 30, 1, "enemy", left)], []) for index in range(3)]
+    for index in range(5, 8):
+        frames.append(
+            (
+                index,
+                index / 30,
+                [
+                    detection(index, index / 30, 2, "enemy", right),
+                    detection(index, index / 30, 1, "enemy", left),
+                ],
+                [],
+            )
+        )
+    run_frames(builder, frames)
+    detected = [event for event in builder.events if event.event == ENEMY_DETECTED]
+    assert {event.track_id for event in detected} == {1, 2}
+
+
 def test_two_enemies_at_once_are_not_merged():
     builder = EventBuilder()
     left = (20, 40, 50, 90)

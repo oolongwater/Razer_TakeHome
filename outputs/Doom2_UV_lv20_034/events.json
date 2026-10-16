@@ -98,11 +98,11 @@
   {
     "timestamp": 3.533,
     "event": "enemy_disappeared",
-    "confidence": 0.101,
-    "track_id": 17,
+    "confidence": 0.158,
+    "track_id": 4,
     "class_name": "enemy",
-    "bearing": 4.5,
-    "proximity": "mid"
+    "bearing": 32.6,
+    "proximity": "near"
   },
   {
     "timestamp": 3.667,
@@ -117,7 +117,7 @@
     "timestamp": 4.267,
     "event": "enemy_disappeared",
     "confidence": 0.715,
-    "track_id": 4,
+    "track_id": 17,
     "class_name": "enemy",
     "bearing": -6.5,
     "proximity": "near"
@@ -852,15 +852,6 @@
     "delta": -1
   },
   {
-    "timestamp": 32.167,
-    "event": "enemy_disappeared",
-    "confidence": 0.189,
-    "track_id": 159,
-    "class_name": "enemy",
-    "bearing": -42.1,
-    "proximity": "far"
-  },
-  {
     "timestamp": 32.367,
     "event": "player_ammo_changed",
     "confidence": 0.737,
@@ -893,6 +884,15 @@
     "old_value": 56,
     "new_value": 54,
     "delta": -2
+  },
+  {
+    "timestamp": 32.633,
+    "event": "enemy_disappeared",
+    "confidence": 0.725,
+    "track_id": 159,
+    "class_name": "enemy",
+    "bearing": -42.9,
+    "proximity": "mid"
   },
   {
     "timestamp": 32.7,
@@ -966,6 +966,15 @@
     "proximity": "near"
   },
   {
+    "timestamp": 34.233,
+    "event": "enemy_disappeared",
+    "confidence": 0.747,
+    "track_id": 180,
+    "class_name": "enemy",
+    "bearing": 28.4,
+    "proximity": "mid"
+  },
+  {
     "timestamp": 34.333,
     "event": "enemy_disappeared",
     "confidence": 0.659,
@@ -981,15 +990,6 @@
     "track_id": 181,
     "class_name": "enemy",
     "bearing": 18.9,
-    "proximity": "near"
-  },
-  {
-    "timestamp": 35.033,
-    "event": "enemy_disappeared",
-    "confidence": 0.894,
-    "track_id": 180,
-    "class_name": "enemy",
-    "bearing": 33.1,
     "proximity": "near"
   },
   {

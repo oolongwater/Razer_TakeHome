@@ -118,13 +118,13 @@ The view row is enemies and items only. It is the number this round was aiming a
 | Clip | Role | View P | View R | View F1 |
 | --- | --- | ---: | ---: | ---: |
 | MAP08 | dev | 0.429 | 0.474 | 0.450 |
-| MAP04 | report | 0.588 | 0.897 | 0.711 |
-| MAP12 | report | 0.526 | 0.857 | 0.652 |
+| MAP04 | report | 0.527 | 0.885 | 0.660 |
+| MAP12 | report | 0.508 | 0.886 | 0.646 |
 | MAP20 | report | 0.337 | 0.630 | 0.439 |
 
 MAP04 is the closest. Its misses are extra pickups (item pickup F1 0.29, five false alarms) and enemy tracks that still fragment. MAP12 misses the one labeled ammo pickup. MAP20 is the weak clip: the detector emits health and ammo sprites the labels do not contain, and several labeled enemies never become a track. Those labels were not edited after this run.
 
-On MAP04, `enemy_detected` F1 is 0.65 and `enemy_disappeared` is 0.76. `item_detected` is 0.77 and `item_disappeared` is 0.82. A pickup is a yellow flash in the view together with a health or ammo increase, or a flash together with an item that vanished in the bottom centre. A weapon switch that only raises the ammo number does not count. An armor bonus does not count. Two monsters of the same class that trade places within 0.5 s can be merged into one track.
+On MAP04, `enemy_detected` F1 is 0.60 and `enemy_disappeared` is 0.68. `item_detected` is 0.77 and `item_disappeared` is 0.82. A pickup is a yellow flash in the view together with a health or ammo increase, or a flash together with an item that vanished in the bottom centre. A weapon switch that only raises the ammo number does not count. An armor bonus does not count. Two monsters of the same class that trade places within 0.5 s can be merged into one track.
 
 ### OCR
 
@@ -163,7 +163,7 @@ What to watch:
 
 - **8.7 s.** Enemy 169 is confirmed. The box sits on the demon, the label shows the class, the id, and the confidence, and a DETECTED tag is on the sprite. A health item beside it has its own box.
 - **10.2 s.** Id 169 is still the demon after the player has moved. The yellow line is the centre of that box over the last half second. A PICKUP FLASH marker sits at the top left when the view tints yellow.
-- **12.1 s.** Id 169 has left the view. GONE tags mark the last boxes, and the side panel's newest rows are the `enemy_disappeared` events at that time, including id 169 at 12.0 s.
+- **10.9 s.** Id 169 has left the view. GONE tags mark the last boxes, and the side panel lists `enemy_disappeared` for id 169 at 10.8 s.
 
 ![Enemy 169 detected](outputs/Doom2_UV_lv04_028/demo_detect.png)
 

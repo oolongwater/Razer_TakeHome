@@ -159,7 +159,7 @@ class EventBuilder:
         self.expired_items = [
             track
             for track in self.expired_items
-            if time - track.last.time <= PICKUP_WINDOW_SECONDS
+            if time - track.last.time <= PICKUP_WINDOW_SECONDS + FLASH_PAIR_SECONDS
         ]
         if flash:
             self.flashes.append(_Flash(time))
@@ -167,6 +167,8 @@ class EventBuilder:
             self.hud_changes.append(change)
 
         seen = set()
+        present = {detection.track_id for detection in detections}
+        present.update(self.display_id(track_id) for track_id in list(present))
         for detection in detections:
             canonical = self.display_id(detection.track_id)
             if canonical != detection.track_id and canonical in self.tracks:
@@ -179,7 +181,7 @@ class EventBuilder:
                 track = _Track(track_id=detection.track_id)
                 self.tracks[detection.track_id] = track
             track.hits.append(detection)
-            self._maybe_confirm(track, frame_index, seen)
+            self._maybe_confirm(track, frame_index, present)
             if detection.track_id in self.alias:
                 seen.add(self.display_id(detection.track_id))
             elif detection.track_id in self.tracks:
@@ -201,8 +203,8 @@ class EventBuilder:
         for track in list(self.tracks.values()):
             if time - track.last.time >= EXPIRE_SECONDS:
                 self._expire(track)
-        self.tracks.clear()
         self._match_flashes(time + FLASH_PAIR_SECONDS)
+        self.tracks.clear()
 
     def _maybe_confirm(self, track, frame_index, seen):
         if track.confirmed:
@@ -246,7 +248,7 @@ class EventBuilder:
             if parent.track_id in seen or parent.class_name != track.class_name:
                 continue
             gap = onset.time - parent.last.time
-            if gap < 0 or gap > EXPIRE_SECONDS:
+            if gap <= 0 or gap > EXPIRE_SECONDS:
                 continue
             ratio = _box_height(onset.bbox) / _box_height(parent.last.bbox)
             if ratio < 0.5 or ratio > 2:

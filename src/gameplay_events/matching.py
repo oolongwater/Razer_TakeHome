@@ -59,7 +59,7 @@ def events_from_intervals(rows, fps, clip_end):
             end_time = span["last"] / fps
             if span["picked_up"] and span["class_name"] != "enemy":
                 events.append({"timestamp": end_time, "event": ITEM_PICKED_UP})
-            elif clip_end - end_time > EXPIRE_SECONDS:
+            elif clip_end - end_time >= EXPIRE_SECONDS:
                 events.append({"timestamp": end_time, "event": _DISAPPEARED[span["class_name"]]})
     events.sort(key=lambda event: (event["timestamp"], event["event"]))
     return events
