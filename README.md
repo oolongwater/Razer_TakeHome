@@ -70,10 +70,23 @@ Bearing is `atan((x_center - 160) / 160)` in degrees. Ahead is 0 and right is po
 All of it is public. Nothing here was rendered for this project.
 
 - **[CocoDoom v1.0.1 standard archive](https://www.robots.ox.ac.uk/~vgg/share/cocodoom-v1.0.1.tar.gz)** (Oxford VGG, about 2.3 GB). Doom II frames from human speedrun demos with COCO boxes. These frames have no status bar, so they train and score the detector only. The published map split is `(map_id - 1) % 4`: 0 and 1 train, 2 validation, 3 test. Test maps include MAP04, MAP08, MAP12, MAP16, MAP20, MAP24, MAP28, and MAP32.
-- **[Doom2_UVlevels](https://archive.org/details/Doom2_UVlevels)** on the Internet Archive. Compet-N UV speedruns at 320×200, 35 tic recordings stored at 30 fps, with the classic status bar. The three clips are held-out maps:
+- **[Doom2_UVlevels](https://archive.org/details/Doom2_UVlevels)** on the Internet Archive. Compet-N UV speedruns at 320×200, 35 tic recordings stored at 30 fps, with the classic status bar. The clips are held-out maps:
   - `Doom2_UV_lv04_028.avi` (MAP04, The Focus)
+  - `Doom2_UV_lv08_022.avi` (MAP08, Tricks and Traps), used only to tune the pipeline
   - `Doom2_UV_lv12_043.avi` (MAP12, The Factory)
   - `Doom2_UV_lv20_034.avi` (MAP20, Gotcha!)
+
+### How enemies and items are labeled
+
+`annotations/<clip>_objects.csv` lists each time an object is on screen. One shared rule turns those rows into events, so the labels and the pipeline mean the same thing.
+
+- An enemy is a live monster whose sprite is at least 8 px tall at 320×200. A sprite cut off by the screen edge still counts. A dying monster counts until it lies flat.
+- An item is a health or ammo pickup whose longer side is at least 8 px. Weapons, armor, keys, and powerups are not items.
+- The intermission screen is ignored.
+- Each row is `object,class_name,first_frame,last_frame,picked_up`. The same object id can appear again after it leaves and comes back. `picked_up` is 1 when the player walks over that item.
+- Intervals of one object less than 0.5 s apart are one presence. A presence of at least 3 frames gives `enemy_detected` or `item_detected` at its first frame, and `enemy_disappeared` or nothing at its last frame. A pickup gives `item_picked_up` at the last frame instead of a disappearance. A track still on screen in the last 0.5 s of the clip does not disappear.
+
+`scripts/label_frames.py` writes contact sheets and boundary crops of the raw view. Those images have no detector boxes. A white 8 px bar in the corner is the size cutoff.
 
 ## Results
 

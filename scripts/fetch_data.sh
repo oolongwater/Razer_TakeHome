@@ -14,7 +14,7 @@ if [[ ! -d "$ROOT/data/cocodoom/run1" ]]; then
 fi
 
 BASE="https://archive.org/download/Doom2_UVlevels"
-for name in Doom2_UV_lv04_028.avi Doom2_UV_lv12_043.avi Doom2_UV_lv20_034.avi; do
+for name in Doom2_UV_lv04_028.avi Doom2_UV_lv08_022.avi Doom2_UV_lv12_043.avi Doom2_UV_lv20_034.avi; do
   if [[ ! -f "$ROOT/data/clips/$name" ]]; then
     curl -L --fail --retry 5 -o "$ROOT/data/clips/$name" "$BASE/$name"
   fi
