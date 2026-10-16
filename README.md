@@ -84,7 +84,8 @@ All of it is public. Nothing here was rendered for this project.
 - An item is a health or ammo pickup whose longer side is at least 8 px. Weapons, armor, keys, and powerups are not items.
 - The intermission screen is ignored.
 - Each row is `object,class_name,first_frame,last_frame,picked_up`. The same object id can appear again after it leaves and comes back. `picked_up` is 1 when the player walks over that item.
-- Intervals of one object less than 0.5 s apart are one presence. A presence of at least 3 frames gives `enemy_detected` or `item_detected` at its first frame, and `enemy_disappeared` or nothing at its last frame. A pickup gives `item_picked_up` at the last frame instead of a disappearance. A track still on screen in the last 0.5 s of the clip does not disappear.
+- Intervals of one object less than 0.5 s apart are one presence. A presence of at least 3 frames gives `enemy_detected` or `item_detected` at its first frame, and `enemy_disappeared` or `item_disappeared` at its last frame. A pickup gives `item_picked_up` at the last frame instead of a disappearance. A track still on screen in the last 0.5 s of the clip does not disappear.
+- The contact sheets step every 10 frames. A row that was only one sample was widened by 5 frames on either side so the interval covers the gap between samples. A pickup keeps the frame it was taken and only the start moves earlier.
 
 `scripts/label_frames.py` writes contact sheets and boundary crops of the raw view. Those images have no detector boxes. A white 8 px bar in the corner is the size cutoff.
 
@@ -96,33 +97,34 @@ Detection scores are precision, recall, and F1 at IoU 0.5 on the CocoDoom test m
 
 ### Detection
 
-mAP50 is 0.461 and mAP50-95 is 0.284.
+The shipped weights are a second fine-tune of the first Doom model: 20 epochs at image size 416, on the same 15% CocoDoom training sample, about two hours on an M2. Test mAP50 is 0.549 and mAP50-95 is 0.360 (previously 0.461 and 0.284 at image size 320).
 
 | Class | Precision | Recall | F1 |
 | --- | ---: | ---: | ---: |
-| enemy | 0.684 | 0.480 | 0.564 |
-| health_item | 0.755 | 0.421 | 0.541 |
-| ammo_item | 0.669 | 0.282 | 0.397 |
+| enemy | 0.747 | 0.546 | 0.631 |
+| health_item | 0.705 | 0.517 | 0.597 |
+| ammo_item | 0.738 | 0.390 | 0.511 |
 
-Recall is the weak side. Small sprites and the flat-corpse filter both drop boxes the test set still counts. These precision and recall figures are Ultralytics' validation scores, taken at the confidence that maximises F1. The video pipeline keeps detections at confidence 0.25. mAP50 averages across confidence thresholds.
+These precision and recall figures are Ultralytics' test scores, taken at the confidence that maximises F1. The video pipeline feeds the tracker detections down to confidence 0.1. A new track still has to clear 0.25. mAP50 averages across confidence thresholds.
 
 ### Events
 
-HUD changes match the hand labels on all three clips: health and ammo event F1 is 1.00 (MAP04 12 health + 18 ammo, MAP12 5 health, MAP20 15 health + 19 ammo).
+Ground truth is built from the visibility intervals with the same 3-of-5 and 0.5 s constants the pipeline uses. MAP08 (`Doom2_UV_lv08_022`) is the only clip used to choose settings. The three report clips were scored once, after those settings were frozen. One frozen round was run. A lower ByteTrack new-track threshold was tried on MAP08 and dropped, because it added false pickups and did not raise view F1.
 
-Enemy and item events are lower, because a fast turn splits one monster into several track ids. Each new id is another `enemy_detected` / `enemy_disappeared`, so precision falls while recall stays higher.
+HUD changes on the report clips still match the hand labels: health and ammo event F1 is 1.00. MAP08 has no HUD labels, so its ammo changes are not part of the view score.
 
-The overall row counts every event type. The view row leaves out health and ammo changes, which are the easy matches, so it is the score for enemies and items alone.
+The view row is enemies and items only. It is the number this round was aiming at (0.8 on each report clip). None of the three reached it.
 
-| Clip | Overall P | Overall R | Overall F1 | View P | View R | View F1 |
-| --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| MAP04 | 0.347 | 0.806 | 0.485 | 0.204 | 0.667 | 0.313 |
-| MAP12 | 0.230 | 0.472 | 0.309 | 0.174 | 0.387 | 0.240 |
-| MAP20 | 0.458 | 0.790 | 0.580 | 0.205 | 0.536 | 0.297 |
+| Clip | Role | View P | View R | View F1 |
+| --- | --- | ---: | ---: | ---: |
+| MAP08 | dev | 0.429 | 0.474 | 0.450 |
+| MAP04 | report | 0.588 | 0.897 | 0.711 |
+| MAP12 | report | 0.526 | 0.857 | 0.652 |
+| MAP20 | report | 0.337 | 0.630 | 0.439 |
 
-Per type, `enemy_detected` F1 is 0.46 / 0.50 / 0.50 on the three clips. `enemy_disappeared` is 0.25 / 0.00 / 0.20: the track expires within a few tenths of a second, and the hand label marks the moment the monster actually leaves the fight, which is often more than 0.5 s later. `item_picked_up` F1 is 0.36 / 0.00 / 0.00. A pickup whose sprite was never confirmed is missed. Separate track ids that each expire in the bottom-centre still each emit a pickup, because that rule does not wait for the counter.
+MAP04 is the closest. Its misses are extra pickups (item pickup F1 0.29, five false alarms) and enemy tracks that still fragment. MAP12 misses the one labeled ammo pickup. MAP20 is the weak clip: the detector emits health and ammo sprites the labels do not contain, and several labeled enemies never become a track. Those labels were not edited after this run.
 
-`item_detected` was only hand-labeled when an item was sitting still in view (one medikit on MAP12, which was found). Other item sprites were not given their own rows, so extra `item_detected` predictions are unmatched.
+On MAP04, `enemy_detected` F1 is 0.65 and `enemy_disappeared` is 0.76. `item_detected` is 0.77 and `item_disappeared` is 0.82. A pickup is a yellow flash in the view together with a health or ammo increase, or a flash together with an item that vanished in the bottom centre. A weapon switch that only raises the ammo number does not count. An armor bonus does not count. Two monsters of the same class that trade places within 0.5 s can be merged into one track.
 
 ### OCR
 
@@ -137,7 +139,8 @@ The filter is a little less accurate on these once-a-second samples because it w
 Hand labels:
 
 - `annotations/*_hud.csv` — health and ammo read off the status bar at each whole second. Blank ammo means the fist is selected and the counter is empty. Intermission screens are omitted.
-- `annotations/*_events.csv` — HUD changes, plus enemies and pickups read from the view at half-second steps. A monster that is only on screen for a flash, or that is a few pixels tall, may be missing from this list. A HUD change is timestamped at the first frame where the raw template read holds the new value for three frames. Those values were checked against the once-a-second visual reads in `*_hud.csv`. The event time is therefore close to the filter's own accept time (about two frames earlier), so the HUD event F1 mostly checks that the filter emits the same transitions the raw reader stabilized on, at the right moment.
+- `annotations/*_hud_events.csv` — HUD changes only. A HUD change is timestamped at the first frame where the raw template read holds the new value for three frames. Those values were checked against the once-a-second visual reads in `*_hud.csv`. The event time is therefore close to the filter's own accept time (about two frames earlier), so the HUD event F1 mostly checks that the filter emits the same transitions the raw reader stabilized on, at the right moment.
+- `annotations/*_objects.csv` — enemy and item visibility intervals. Events are derived from these, not stored as a second hand-written list.
 
 ## Failure cases
 
@@ -146,9 +149,29 @@ Hand labels:
 - **Palette twins.** A few glyphs (2/8, 3/9, 5/6) stay close even with a second template. A misread that lasts three frames becomes a false HUD event.
 - **Corpse filter.** Flat enemy boxes are not trained, so a live monster seen edge-on can be missed, and a death is only a disappearance. There is no `enemy_killed` event.
 - **Gun and muzzle flash.** The gun filter drops a wide box on the bottom edge. A monster standing in that same spot, or a flash that covers it, can be dropped or can split the track.
-- **Fast turns.** ByteTrack has no camera-motion compensation. A quick turn gives a new id, which looks like one enemy disappearing and another appearing.
-- **Items off to the side.** An item that leaves the view without a later counter increase is not a pickup. A pickup whose sprite was never confirmed for three frames is missed even if the counter moves. One increase is paired with one item. A weapon switch that raises the ammo number can still confirm one nearby ammo sprite. Several ids that die in the bottom-centre each count as their own pickup.
+- **Fast turns.** A new track of the same class can inherit an unseen parent if the gap is under 0.5 s and the sprite height stays within a factor of two. Two monsters of the same class that swap places inside that window become one track.
+- **Crowds.** Several monsters in one room often produce fewer confirmed tracks than labeled sprites, especially when they are small or partly overlapping. That is the main miss on MAP08 and part of the miss on MAP20.
+- **Pickups.** There is no pickup without the yellow view flash. A flash that lines up with a counter increase, or with an item that just left the bottom centre, still becomes a pickup, so a few false pickups remain on MAP04 and MAP20. A sprite under 8 px never starts an event.
+- **Intermission.** Frames whose status bar does not match the HEALTH label are ignored, so the tally screen does not add enemies or items.
 - **Radar.** Bearing assumes a 90-degree view and a centred player. Proximity is sprite height, so a lost soul and a baron at the same distance are not the same band.
+
+## Demo
+
+[outputs/Doom2_UV_lv04_028/demo.mp4](outputs/Doom2_UV_lv04_028/demo.mp4) is MAP04 with the frozen pipeline. It is H.264, 1280×600, 30 fps, 932 frames (31 s). The left side is the view. The right side lists the class colours, running counts, and the last 12 events.
+
+What to watch:
+
+- **8.7 s.** Enemy 169 is confirmed. The box sits on the demon, the label shows the class, the id, and the confidence, and a DETECTED tag is on the sprite. A health item beside it has its own box.
+- **10.2 s.** Id 169 is still the demon after the player has moved. The yellow line is the centre of that box over the last half second. A PICKUP FLASH marker sits at the top left when the view tints yellow.
+- **12.1 s.** Id 169 has left the view. GONE tags mark the last boxes, and the side panel's newest rows are the `enemy_disappeared` events at that time, including id 169 at 12.0 s.
+
+![Enemy 169 detected](outputs/Doom2_UV_lv04_028/demo_detect.png)
+
+![Id 169 held through the turn](outputs/Doom2_UV_lv04_028/demo_track.png)
+
+![Id 169 gone](outputs/Doom2_UV_lv04_028/demo_event.png)
+
+Tracks that have not yet been seen in 3 of 5 frames are drawn thin and gray, labeled pending. Confirmed boxes use the class colour. Each id keeps one trail colour, and a stitched fragment keeps its parent's number.
 
 ## Reproduce
 
@@ -159,10 +182,15 @@ uv pip install -e ".[dev]"
 
 bash scripts/fetch_data.sh          # CocoDoom (~2.3 GB) and the three clips
 python scripts/build_dataset.py     # YOLO labels under data/yolo
-python scripts/train.py             # writes models/yolo11n-doom.pt
+python scripts/train.py             # first fine-tune, image size 320, writes models/yolo11n-doom.pt
+python scripts/train.py --epochs 20 --imgsz 416 --patience 20 --model models/yolo11n-doom.pt
 python -m gameplay_events.pipeline data/clips/Doom2_UV_lv04_028.avi
 python scripts/evaluate.py
 pytest
+
+ffmpeg -y -i outputs/Doom2_UV_lv04_028/annotated.mp4 \
+  -c:v libx264 -pix_fmt yuv420p -crf 20 -movflags +faststart \
+  outputs/Doom2_UV_lv04_028/demo.mp4
 ```
 
 `gameplay-events VIDEO --output outputs/NAME` is the same entry point. `--no-hud` skips the status bar, for a full-screen view with no counters.

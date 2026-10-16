@@ -45,7 +45,7 @@ def is_too_small(bbox, class_name):
 
 
 class DetectorTracker:
-    def __init__(self, weights, conf=0.1, imgsz=320, view_height=VIEW_HEIGHT, device="mps"):
+    def __init__(self, weights, conf=0.1, imgsz=416, view_height=VIEW_HEIGHT, device="mps"):
         self.model = YOLO(weights)
         self.conf = conf
         self.imgsz = imgsz

@@ -202,6 +202,7 @@ class EventBuilder:
             if time - track.last.time >= EXPIRE_SECONDS:
                 self._expire(track)
         self.tracks.clear()
+        self._match_flashes(time + FLASH_PAIR_SECONDS)
 
     def _maybe_confirm(self, track, frame_index, seen):
         if track.confirmed:

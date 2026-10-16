@@ -14,7 +14,7 @@ from gameplay_events.matching import events_from_intervals, match_events
 def detection_scores(weights, data, device):
     from ultralytics import YOLO
 
-    metrics = YOLO(weights).val(data=data, split="test", imgsz=320, device=device, verbose=False)
+    metrics = YOLO(weights).val(data=data, split="test", imgsz=416, device=device, verbose=False)
     names = metrics.names
     rows = []
     for index, name in names.items():
