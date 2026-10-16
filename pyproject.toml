@@ -1,0 +1,33 @@
+[project]
+name = "gameplay-events"
+version = "1.0.0"
+description = "Detect structured gameplay events from Doom II video."
+requires-python = ">=3.10"
+dependencies = [
+    "numpy>=1.26",
+    "opencv-python>=4.10",
+    "pandas>=2.2",
+    "pyyaml>=6.0",
+    "ultralytics>=8.3",
+    "lap>=0.5.12",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0"]
+
+[project.scripts]
+gameplay-events = "gameplay_events.pipeline:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+gameplay_events = ["templates/*.png"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
