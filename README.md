@@ -163,7 +163,7 @@ What to watch:
 
 - **8.7 s.** Enemy 169 is confirmed. The box sits on the demon, the label shows the class, the id, and the confidence, and a DETECTED tag is on the sprite. A health item beside it has its own box.
 - **10.2 s.** Id 169 is still the demon after the player has moved. The yellow line is the centre of that box over the last half second. A PICKUP FLASH marker sits at the top left when the view tints yellow.
-- **10.9 s.** Id 169 has left the view. GONE tags mark the last boxes, and the side panel lists `enemy_disappeared` for id 169 at 10.8 s.
+- **10.9 s.** Id 169 leaves. A GONE tag sits on its last box, and `events.json` has `enemy_disappeared` for id 169 at 10.8 s.
 
 ![Enemy 169 detected](outputs/Doom2_UV_lv04_028/demo_detect.png)
 
