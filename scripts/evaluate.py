@@ -8,7 +8,7 @@ from pathlib import Path
 import cv2
 
 from gameplay_events.hud import HudReader, load_templates, read_hud
-from gameplay_events.matching import match_events
+from gameplay_events.matching import events_from_intervals, match_events
 
 
 def detection_scores(weights, data, device):
@@ -41,21 +41,26 @@ def load_csv(path):
         return list(csv.DictReader(handle))
 
 
-def event_scores(prediction_dir, annotation_dir):
-    scores = {}
-    for annotation_path in sorted(Path(annotation_dir).glob("*_events.csv")):
-        if annotation_path.name.endswith("_hud_events.csv"):
-            continue
-        clip = annotation_path.name.replace("_events.csv", "")
+def event_scores(prediction_dir, annotation_dir, clips_dir):
+    dev = {}
+    report = {}
+    for annotation_path in sorted(Path(annotation_dir).glob("*_objects.csv")):
+        clip = annotation_path.name.replace("_objects.csv", "")
         prediction_path = Path(prediction_dir) / clip / "events.json"
+        if not prediction_path.exists():
+            continue
+        fps, clip_end = _clip_timing(clips_dir, clip)
+        ground_truth = events_from_intervals(load_csv(annotation_path), fps, clip_end)
+        hud_path = Path(annotation_dir) / f"{clip}_hud_events.csv"
+        if hud_path.exists():
+            for row in load_csv(hud_path):
+                ground_truth.append({"timestamp": float(row["timestamp"]), "event": row["event"]})
         predicted = json.loads(prediction_path.read_text())
-        ground_truth = []
-        for row in load_csv(annotation_path):
-            ground_truth.append({"timestamp": float(row["timestamp"]), "event": row["event"]})
         rows = match_events(predicted, ground_truth)
         rows["view_overall"] = _without_hud(rows)
-        scores[clip] = rows
-    return scores
+        bucket = dev if clip.endswith("lv08_022") else report
+        bucket[clip] = rows
+    return {"dev": dev, "report": report}
 
 
 def _without_hud(rows):
@@ -138,10 +143,18 @@ def ocr_scores(clips_dir, annotation_dir):
 
 
 def _find_video(clips_dir, clip):
-    matches = list(Path(clips_dir).glob(f"*{clip}*"))
-    if not matches:
-        raise FileNotFoundError(f"No video for {clip} in {clips_dir}")
-    return matches[0]
+    path = Path(clips_dir) / f"{clip}.avi"
+    if not path.exists():
+        raise FileNotFoundError(f"No video {path}")
+    return path
+
+
+def _clip_timing(clips_dir, clip):
+    capture = cv2.VideoCapture(str(_find_video(clips_dir, clip)))
+    fps = capture.get(cv2.CAP_PROP_FPS) or 30.0
+    frames = capture.get(cv2.CAP_PROP_FRAME_COUNT) or 0
+    capture.release()
+    return fps, max(frames - 1, 0) / fps
 
 
 def main():
@@ -160,8 +173,8 @@ def main():
     if not args.skip_detection:
         print("detection on held-out maps...")
         report["detection"] = detection_scores(args.weights, args.data, args.device)
-    if any(args.annotations.glob("*_events.csv")):
-        report["events"] = event_scores(args.predictions, args.annotations)
+    if any(args.annotations.glob("*_objects.csv")):
+        report["events"] = event_scores(args.predictions, args.annotations, args.clips)
     if any(args.annotations.glob("*_hud.csv")):
         report["ocr"] = ocr_scores(args.clips, args.annotations)
     args.output.parent.mkdir(parents=True, exist_ok=True)

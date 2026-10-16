@@ -1,4 +1,4 @@
-from gameplay_events.matching import match_events
+from gameplay_events.matching import events_from_intervals, match_events
 from gameplay_events.radar import bearing_degrees, proximity_label
 
 
@@ -29,6 +29,24 @@ def test_outside_tolerance_does_not_match():
     assert scores["enemy_disappeared"]["tp"] == 0
     assert scores["enemy_disappeared"]["fp"] == 1
     assert scores["enemy_disappeared"]["fn"] == 1
+
+
+def test_intervals_merge_short_gaps_and_skip_the_clip_end():
+    rows = [
+        {"object": "e1", "class_name": "enemy", "first_frame": 0, "last_frame": 5, "picked_up": 0},
+        {"object": "e1", "class_name": "enemy", "first_frame": 10, "last_frame": 20, "picked_up": 0},
+        {"object": "h1", "class_name": "health_item", "first_frame": 30, "last_frame": 34, "picked_up": 1},
+        {"object": "e2", "class_name": "enemy", "first_frame": 0, "last_frame": 1, "picked_up": 0},
+        {"object": "e3", "class_name": "enemy", "first_frame": 85, "last_frame": 90, "picked_up": 0},
+    ]
+    events = events_from_intervals(rows, fps=30, clip_end=3.0)
+    kinds = [event["event"] for event in events]
+    # e1's two intervals merge. e2 is under 3 frames. e3 is kept but does not disappear.
+    assert kinds.count("enemy_detected") == 2
+    assert kinds.count("enemy_disappeared") == 1
+    assert kinds.count("item_detected") == 1
+    assert kinds.count("item_picked_up") == 1
+    assert "item_disappeared" not in kinds
 
 
 def test_bearing_is_zero_ahead_and_signed():

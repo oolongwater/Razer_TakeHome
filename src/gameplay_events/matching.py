@@ -1,6 +1,68 @@
 """One-to-one matching of predicted events to ground truth."""
 
+from gameplay_events.events import (
+    CONFIRM_HITS,
+    ENEMY_DETECTED,
+    ENEMY_DISAPPEARED,
+    EXPIRE_SECONDS,
+    ITEM_DETECTED,
+    ITEM_DISAPPEARED,
+    ITEM_PICKED_UP,
+)
+
 TOLERANCE_SECONDS = 0.5
+
+_DETECTED = {"enemy": ENEMY_DETECTED, "health_item": ITEM_DETECTED, "ammo_item": ITEM_DETECTED}
+_DISAPPEARED = {"enemy": ENEMY_DISAPPEARED, "health_item": ITEM_DISAPPEARED, "ammo_item": ITEM_DISAPPEARED}
+
+
+def events_from_intervals(rows, fps, clip_end):
+    """Turn visibility intervals into the same events the pipeline emits.
+
+    Intervals of one object less than ``EXPIRE_SECONDS`` apart are one
+    presence. A presence shorter than ``CONFIRM_HITS`` frames is ignored.
+    ``picked_up`` replaces a disappearance. A presence that ends within
+    ``EXPIRE_SECONDS`` of the clip does not disappear, matching ``finish``.
+    """
+    grouped = {}
+    for row in rows:
+        grouped.setdefault(str(row["object"]), []).append(row)
+    events = []
+    for group in grouped.values():
+        ordered = sorted(group, key=lambda row: int(row["first_frame"]))
+        spans = []
+        for row in ordered:
+            first = int(row["first_frame"])
+            last = int(row["last_frame"])
+            picked = int(row["picked_up"])
+            class_name = row["class_name"]
+            if (
+                spans
+                and spans[-1]["class_name"] == class_name
+                and (first / fps) - (spans[-1]["last"] / fps) < EXPIRE_SECONDS
+            ):
+                spans[-1]["last"] = max(spans[-1]["last"], last)
+                spans[-1]["picked_up"] = max(spans[-1]["picked_up"], picked)
+                continue
+            spans.append(
+                {
+                    "class_name": class_name,
+                    "first": first,
+                    "last": last,
+                    "picked_up": picked,
+                }
+            )
+        for span in spans:
+            if span["last"] - span["first"] + 1 < CONFIRM_HITS:
+                continue
+            events.append({"timestamp": span["first"] / fps, "event": _DETECTED[span["class_name"]]})
+            end_time = span["last"] / fps
+            if span["picked_up"] and span["class_name"] != "enemy":
+                events.append({"timestamp": end_time, "event": ITEM_PICKED_UP})
+            elif clip_end - end_time > EXPIRE_SECONDS:
+                events.append({"timestamp": end_time, "event": _DISAPPEARED[span["class_name"]]})
+    events.sort(key=lambda event: (event["timestamp"], event["event"]))
+    return events
 
 
 def _timestamp(item):

@@ -9,7 +9,8 @@ import cv2
 
 from gameplay_events.detect_track import VIEW_HEIGHT, DetectorTracker
 from gameplay_events.events import EventBuilder
-from gameplay_events.hud import HudReader
+from gameplay_events.flash import FlashDetector
+from gameplay_events.hud import HudReader, status_bar_visible
 from gameplay_events.radar import RADAR_RADIUS, draw_radar, enemy_blips, locate
 
 CANONICAL_WIDTH = 320
@@ -103,7 +104,7 @@ def _draw_overlay(frame, detections, hud_state, recent_events, blips):
     return canvas
 
 
-def analyze_video(video_path, weights, output_dir, conf=0.25, read_hud=True, save_video=True):
+def analyze_video(video_path, weights, output_dir, conf=0.1, read_hud=True, save_video=True):
     video_path = Path(video_path)
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -114,6 +115,7 @@ def analyze_video(video_path, weights, output_dir, conf=0.25, read_hud=True, sav
 
     tracker = DetectorTracker(weights, conf=conf)
     builder = EventBuilder(locate=locate)
+    flashes = FlashDetector()
     hud = HudReader() if read_hud else None
     writer = None
     screenshots = 0
@@ -127,15 +129,18 @@ def analyze_video(video_path, weights, output_dir, conf=0.25, read_hud=True, sav
         frame = canonicalize(frame)
         time = frame_index / fps
         view = frame[:VIEW_HEIGHT]
-        detections = tracker.observe(view, frame_index, time)
+        playing = status_bar_visible(frame) if read_hud else True
+        detections = tracker.observe(view, frame_index, time) if playing else []
         hud_events = []
         hud_changes = []
         hud_state = {"health": None, "ammo": None}
-        if hud is not None:
+        flash = False
+        if hud is not None and playing:
             reading, hud_events, hud_changes = hud.update(frame, time)
             hud_state = {"health": hud.health, "ammo": hud.ammo, "raw": reading}
+            flash = flashes.update(view, time)
         before = len(builder.events)
-        builder.update(frame_index, time, detections, hud_changes)
+        builder.update(frame_index, time, detections, hud_changes, flash=flash)
         new_events = hud_events + builder.events[before:]
         recent.extend(new_events)
         if save_video or screenshots < 8:
@@ -173,7 +178,7 @@ def main():
     parser.add_argument("video", type=Path)
     parser.add_argument("--weights", type=Path, default=Path("models/yolo11n-doom.pt"))
     parser.add_argument("--output", type=Path, default=None)
-    parser.add_argument("--conf", type=float, default=0.25)
+    parser.add_argument("--conf", type=float, default=0.1)
     parser.add_argument("--no-hud", action="store_true", help="Video has no status bar (full-screen view).")
     args = parser.parse_args()
     output = args.output

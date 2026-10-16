@@ -21,19 +21,22 @@ def main():
     parser.add_argument("--data", type=Path, default=Path("data/yolo/data.yaml"))
     parser.add_argument("--device", default="mps")
     parser.add_argument("--epochs", type=int, default=EPOCHS)
+    parser.add_argument("--imgsz", type=int, default=IMAGE_SIZE)
+    parser.add_argument("--patience", type=int, default=PATIENCE)
+    parser.add_argument("--model", type=Path, default=Path("yolo11n.pt"))
     parser.add_argument("--weights-out", type=Path, default=Path("models/yolo11n-doom.pt"))
     args = parser.parse_args()
 
-    model = YOLO("yolo11n.pt")
+    model = YOLO(str(args.model))
     model.train(
         data=str(args.data.resolve()),
         epochs=args.epochs,
-        imgsz=IMAGE_SIZE,
+        imgsz=args.imgsz,
         batch=BATCH,
         device=args.device,
         project=str(Path("runs").resolve()),
         name="doom",
-        patience=PATIENCE,
+        patience=args.patience,
         workers=2,
         exist_ok=True,
         fraction=FRACTION,

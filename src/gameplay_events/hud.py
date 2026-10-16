@@ -24,6 +24,24 @@ BLANK_INK_PIXELS = 12
 PERSISTENCE = 3
 
 _TEMPLATE_DIR = Path(__file__).resolve().parent / "templates"
+LABEL_TOP = 189
+LABEL_BOTTOM = 198
+LABEL_LEFT = 48
+LABEL_RIGHT = 104
+LABEL_DIFF = 30
+
+
+def status_bar_visible(frame_bgr, reference=None):
+    """The HEALTH label is on the stone status bar and missing from the tally screen."""
+    if frame_bgr.shape[0] != 200 or frame_bgr.shape[1] != 320:
+        frame_bgr = cv2.resize(frame_bgr, (320, 200), interpolation=cv2.INTER_AREA)
+    if reference is None:
+        reference = cv2.imread(str(_TEMPLATE_DIR / "health_label.png"))
+    patch = frame_bgr[LABEL_TOP:LABEL_BOTTOM, LABEL_LEFT:LABEL_RIGHT]
+    if reference is None or patch.shape != reference.shape:
+        return True
+    difference = np.abs(patch.astype(np.int16) - reference.astype(np.int16)).mean()
+    return difference < LABEL_DIFF
 
 
 def ink_mask(bgr):

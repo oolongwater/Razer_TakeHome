@@ -18,9 +18,11 @@ def enemy_box():
 
 
 def run_frames(builder, specs):
-    """specs: list of (frame, time, detections, hud_changes)."""
-    for frame, time, detections, changes in specs:
-        builder.update(frame, time, detections, changes)
+    """specs: list of (frame, time, detections, hud_changes[, flash])."""
+    for spec in specs:
+        frame, time, detections, changes = spec[:4]
+        flash = spec[4] if len(spec) > 4 else False
+        builder.update(frame, time, detections, changes, flash=flash)
 
 
 def test_single_frame_flicker_is_ignored():
@@ -81,26 +83,34 @@ def test_item_leaving_the_view_is_not_a_pickup():
     assert any(event.event == ITEM_DETECTED for event in builder.events)
 
 
-def test_item_expiring_in_the_pickup_zone():
+def test_item_expiring_in_the_pickup_zone_without_a_flash_is_not_a_pickup():
     builder = EventBuilder()
     near = (130, 130, 160, 160)
     frames = [(index, index / 30, [detection(index, index / 30, 4, "health_item", near)], []) for index in range(3)]
     frames.append((20, 0.8, [], []))
     run_frames(builder, frames)
-    pickups = [event for event in builder.events if event.event == ITEM_PICKED_UP]
-    assert len(pickups) == 1
-    assert pickups[0].class_name == "health_item"
+    assert not any(event.event == ITEM_PICKED_UP for event in builder.events)
 
 
 def test_hud_increase_picks_up_an_item_outside_the_zone():
     builder = EventBuilder()
     far = (10, 20, 24, 36)
     frames = [(index, index / 30, [detection(index, index / 30, 4, "ammo_item", far)], []) for index in range(3)]
-    frames.append((4, 0.2, [], [HudChange(0.2, "ammo", 20, 24)]))
+    frames.append((4, 0.2, [], [HudChange(0.2, "ammo", 20, 24)], True))
     frames.append((20, 0.9, [], []))
     run_frames(builder, frames)
     pickups = [event for event in builder.events if event.event == ITEM_PICKED_UP]
     assert len(pickups) == 1
+
+
+def test_weapon_switch_without_a_flash_is_not_a_pickup():
+    builder = EventBuilder()
+    far = (10, 20, 24, 36)
+    frames = [(index, index / 30, [detection(index, index / 30, 4, "ammo_item", far)], []) for index in range(3)]
+    frames.append((4, 0.2, [], [HudChange(0.2, "ammo", 4, 50)]))
+    frames.append((20, 0.9, [], []))
+    run_frames(builder, frames)
+    assert not any(event.event == ITEM_PICKED_UP for event in builder.events)
 
 
 def test_hud_increase_after_the_item_expired_still_counts():
@@ -108,11 +118,11 @@ def test_hud_increase_after_the_item_expired_still_counts():
     far = (10, 20, 24, 36)
     frames = [(index, index / 30, [detection(index, index / 30, 4, "ammo_item", far)], []) for index in range(3)]
     frames.append((18, 0.6, [], []))
-    frames.append((27, 0.9, [], [HudChange(0.9, "ammo", 20, 24)]))
+    frames.append((27, 0.9, [], [HudChange(0.9, "ammo", 20, 24)], True))
     run_frames(builder, frames)
     pickups = [event for event in builder.events if event.event == ITEM_PICKED_UP]
     assert len(pickups) == 1
-    assert abs(pickups[0].timestamp - 2 / 30) < 1e-6
+    assert abs(pickups[0].timestamp - 0.9) < 1e-6
 
 
 def test_health_loss_does_not_pick_up_an_item():
@@ -141,7 +151,7 @@ def test_one_hud_increase_picks_up_only_one_item():
                 [],
             )
         )
-    frames.append((4, 0.2, [], [HudChange(0.2, "ammo", 20, 24)]))
+    frames.append((4, 0.2, [], [HudChange(0.2, "ammo", 20, 24)], True))
     frames.append((20, 0.9, [], []))
     run_frames(builder, frames)
     pickups = [event for event in builder.events if event.event == ITEM_PICKED_UP]
@@ -162,8 +172,78 @@ def test_zone_and_hud_do_not_double_count():
     builder = EventBuilder()
     near = (130, 130, 160, 160)
     frames = [(index, index / 30, [detection(index, index / 30, 4, "health_item", near)], []) for index in range(3)]
-    frames.append((4, 0.2, [], [HudChange(0.2, "health", 80, 100)]))
+    frames.append((4, 0.2, [], [HudChange(0.2, "health", 80, 100)], True))
     frames.append((20, 0.9, [], []))
     run_frames(builder, frames)
     pickups = [event for event in builder.events if event.event == ITEM_PICKED_UP]
     assert len(pickups) == 1
+
+
+def test_a_fragment_keeps_the_parent_id():
+    builder = EventBuilder()
+    box = enemy_box()
+    frames = [(index, index / 30, [detection(index, index / 30, 1, "enemy", box)], []) for index in range(3)]
+    frames.append((6, 0.2, [detection(6, 0.2, 2, "enemy", box)], []))
+    frames.append((7, 0.23, [detection(7, 0.23, 2, "enemy", box)], []))
+    frames.append((8, 0.27, [detection(8, 0.27, 2, "enemy", box)], []))
+    run_frames(builder, frames)
+    detected = [event for event in builder.events if event.event == ENEMY_DETECTED]
+    assert len(detected) == 1
+    assert detected[0].track_id == 1
+    assert builder.display_id(2) == 1
+
+
+def test_two_enemies_at_once_are_not_merged():
+    builder = EventBuilder()
+    left = (20, 40, 50, 90)
+    right = (200, 40, 230, 90)
+    frames = []
+    for index in range(3):
+        frames.append(
+            (
+                index,
+                index / 30,
+                [
+                    detection(index, index / 30, 1, "enemy", left),
+                    detection(index, index / 30, 2, "enemy", right),
+                ],
+                [],
+            )
+        )
+    run_frames(builder, frames)
+    detected = [event for event in builder.events if event.event == ENEMY_DETECTED]
+    assert len(detected) == 2
+
+
+def test_expiry_waits_while_a_successor_might_confirm():
+    builder = EventBuilder()
+    box = enemy_box()
+    frames = [(index, index / 30, [detection(index, index / 30, 1, "enemy", box)], []) for index in range(3)]
+    frames.append((16, 16 / 30, [detection(16, 16 / 30, 2, "enemy", box)], []))
+    frames.append((17, 17 / 30, [detection(17, 17 / 30, 2, "enemy", box)], []))
+    run_frames(builder, frames)
+    assert not any(event.event == ENEMY_DISAPPEARED for event in builder.events)
+
+
+def test_flash_plus_zone_item_is_a_pickup():
+    builder = EventBuilder()
+    near = (130, 130, 160, 160)
+    frames = [(index, index / 30, [detection(index, index / 30, 4, "health_item", near)], []) for index in range(3)]
+    frames.append((6, 0.2, [], [], True))
+    frames.append((20, 0.6, [], []))
+    run_frames(builder, frames)
+    pickups = [event for event in builder.events if event.event == ITEM_PICKED_UP]
+    assert len(pickups) == 1
+    assert pickups[0].class_name == "health_item"
+
+
+def test_a_gap_longer_than_expiry_is_a_new_enemy():
+    builder = EventBuilder()
+    box = enemy_box()
+    frames = [(index, index / 30, [detection(index, index / 30, 1, "enemy", box)], []) for index in range(3)]
+    frames.append((30, 1.0, [], []))
+    for index in range(31, 34):
+        frames.append((index, index / 30, [detection(index, index / 30, 2, "enemy", box)], []))
+    run_frames(builder, frames)
+    detected = [event for event in builder.events if event.event == ENEMY_DETECTED]
+    assert len(detected) == 2
