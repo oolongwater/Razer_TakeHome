@@ -10,10 +10,8 @@ from dataclasses import dataclass, field
 ENEMY_DETECTED = "enemy_detected"
 ENEMY_DISAPPEARED = "enemy_disappeared"
 ITEM_DETECTED = "item_detected"
-ITEM_DISAPPEARED = "item_disappeared"
 ITEM_PICKED_UP = "item_picked_up"
 HEALTH_CHANGED = "player_health_changed"
-AMMO_CHANGED = "player_ammo_changed"
 
 CONFIRM_HITS = 3
 CONFIRM_WINDOW = 5
@@ -292,18 +290,8 @@ class EventBuilder:
                 )
             )
             return
-        if track.pickup_emitted:
-            return
-        self.expired_items.append(track)
-        self.events.append(
-            GameplayEvent(
-                timestamp=last.time,
-                event=ITEM_DISAPPEARED,
-                confidence=last.confidence,
-                track_id=self.display_id(track.track_id),
-                class_name=track.class_name,
-            )
-        )
+        if not track.pickup_emitted:
+            self.expired_items.append(track)
 
     def _match_flashes(self, time):
         for flash in self.flashes:
@@ -382,15 +370,6 @@ class EventBuilder:
             class_name = track.class_name
             track_id = self.display_id(track.track_id)
             confidence = sum(hit.confidence for hit in track.hits) / len(track.hits)
-            self.events = [
-                event
-                for event in self.events
-                if not (
-                    event.event == ITEM_DISAPPEARED
-                    and event.track_id == track_id
-                    and abs(event.timestamp - track.last.time) < 1e-6
-                )
-            ]
         else:
             track_id = None
             confidence = 0.5

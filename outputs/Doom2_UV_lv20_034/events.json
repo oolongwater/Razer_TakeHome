@@ -220,20 +220,6 @@
     "class_name": "health_item"
   },
   {
-    "timestamp": 9.433,
-    "event": "item_disappeared",
-    "confidence": 0.89,
-    "track_id": 42,
-    "class_name": "health_item"
-  },
-  {
-    "timestamp": 9.533,
-    "event": "item_disappeared",
-    "confidence": 0.837,
-    "track_id": 44,
-    "class_name": "health_item"
-  },
-  {
     "timestamp": 9.733,
     "event": "enemy_detected",
     "confidence": 0.235,
@@ -297,13 +283,6 @@
     "timestamp": 11.233,
     "event": "item_detected",
     "confidence": 0.741,
-    "track_id": 67,
-    "class_name": "ammo_item"
-  },
-  {
-    "timestamp": 11.3,
-    "event": "item_disappeared",
-    "confidence": 0.754,
     "track_id": 67,
     "class_name": "ammo_item"
   },
@@ -425,29 +404,6 @@
     "class_name": "health_item"
   },
   {
-    "timestamp": 15.9,
-    "event": "player_ammo_changed",
-    "confidence": 0.737,
-    "old_value": 50,
-    "new_value": 49,
-    "delta": -1
-  },
-  {
-    "timestamp": 16.167,
-    "event": "item_disappeared",
-    "confidence": 0.59,
-    "track_id": 94,
-    "class_name": "health_item"
-  },
-  {
-    "timestamp": 16.267,
-    "event": "player_ammo_changed",
-    "confidence": 0.702,
-    "old_value": 49,
-    "new_value": 48,
-    "delta": -1
-  },
-  {
     "timestamp": 16.3,
     "event": "enemy_detected",
     "confidence": 0.203,
@@ -455,13 +411,6 @@
     "class_name": "enemy",
     "bearing": -0.8,
     "proximity": "near"
-  },
-  {
-    "timestamp": 16.467,
-    "event": "item_disappeared",
-    "confidence": 0.416,
-    "track_id": 93,
-    "class_name": "health_item"
   },
   {
     "timestamp": 16.5,
@@ -473,28 +422,12 @@
     "proximity": "near"
   },
   {
-    "timestamp": 16.633,
-    "event": "player_ammo_changed",
-    "confidence": 0.762,
-    "old_value": 48,
-    "new_value": 47,
-    "delta": -1
-  },
-  {
     "timestamp": 16.967,
     "event": "player_health_changed",
     "confidence": 0.83,
     "old_value": 37,
     "new_value": 33,
     "delta": -4
-  },
-  {
-    "timestamp": 17.067,
-    "event": "player_ammo_changed",
-    "confidence": 0.658,
-    "old_value": 47,
-    "new_value": 46,
-    "delta": -1
   },
   {
     "timestamp": 17.233,
@@ -515,26 +448,10 @@
     "proximity": "near"
   },
   {
-    "timestamp": 17.533,
-    "event": "player_ammo_changed",
-    "confidence": 0.553,
-    "old_value": 46,
-    "new_value": 45,
-    "delta": -1
-  },
-  {
     "timestamp": 18.267,
     "event": "item_picked_up",
     "confidence": 0.5,
     "class_name": "health_item"
-  },
-  {
-    "timestamp": 18.3,
-    "event": "player_ammo_changed",
-    "confidence": 0.894,
-    "old_value": 45,
-    "new_value": 12,
-    "delta": -33
   },
   {
     "timestamp": 18.3,
@@ -543,14 +460,6 @@
     "old_value": 33,
     "new_value": 58,
     "delta": 25
-  },
-  {
-    "timestamp": 18.833,
-    "event": "player_ammo_changed",
-    "confidence": 0.877,
-    "old_value": 12,
-    "new_value": 11,
-    "delta": -1
   },
   {
     "timestamp": 18.867,
@@ -614,29 +523,6 @@
     "class_name": "health_item"
   },
   {
-    "timestamp": 20.0,
-    "event": "item_disappeared",
-    "confidence": 0.356,
-    "track_id": 135,
-    "class_name": "health_item"
-  },
-  {
-    "timestamp": 20.433,
-    "event": "player_ammo_changed",
-    "confidence": 0.745,
-    "old_value": 11,
-    "new_value": 55,
-    "delta": 44
-  },
-  {
-    "timestamp": 21.033,
-    "event": "player_ammo_changed",
-    "confidence": 0.844,
-    "old_value": 55,
-    "new_value": 52,
-    "delta": -3
-  },
-  {
     "timestamp": 21.133,
     "event": "enemy_disappeared",
     "confidence": 0.817,
@@ -646,48 +532,16 @@
     "proximity": "near"
   },
   {
-    "timestamp": 21.2,
-    "event": "player_ammo_changed",
-    "confidence": 0.665,
-    "old_value": 52,
-    "new_value": 51,
-    "delta": -1
-  },
-  {
-    "timestamp": 21.733,
-    "event": "player_ammo_changed",
-    "confidence": 0.856,
-    "old_value": 51,
-    "new_value": 11,
-    "delta": -40
-  },
-  {
     "timestamp": 21.867,
     "event": "item_picked_up",
     "confidence": 0.5,
     "class_name": "ammo_item"
   },
   {
-    "timestamp": 21.933,
-    "event": "player_ammo_changed",
-    "confidence": 0.753,
-    "old_value": 11,
-    "new_value": 15,
-    "delta": 4
-  },
-  {
     "timestamp": 22.633,
     "event": "item_picked_up",
     "confidence": 0.5,
     "class_name": "ammo_item"
-  },
-  {
-    "timestamp": 22.7,
-    "event": "player_ammo_changed",
-    "confidence": 0.821,
-    "old_value": 15,
-    "new_value": 19,
-    "delta": 4
   },
   {
     "timestamp": 27.167,
@@ -751,14 +605,6 @@
     "proximity": "near"
   },
   {
-    "timestamp": 29.933,
-    "event": "player_ammo_changed",
-    "confidence": 0.798,
-    "old_value": 19,
-    "new_value": 18,
-    "delta": -1
-  },
-  {
     "timestamp": 30.467,
     "event": "enemy_disappeared",
     "confidence": 0.791,
@@ -771,13 +617,6 @@
     "timestamp": 30.5,
     "event": "item_detected",
     "confidence": 0.396,
-    "track_id": 154,
-    "class_name": "ammo_item"
-  },
-  {
-    "timestamp": 30.633,
-    "event": "item_disappeared",
-    "confidence": 0.306,
     "track_id": 154,
     "class_name": "ammo_item"
   },
@@ -798,14 +637,6 @@
     "class_name": "enemy",
     "bearing": -39.4,
     "proximity": "near"
-  },
-  {
-    "timestamp": 31.233,
-    "event": "player_ammo_changed",
-    "confidence": 0.791,
-    "old_value": 18,
-    "new_value": 60,
-    "delta": 42
   },
   {
     "timestamp": 31.933,
@@ -844,22 +675,6 @@
     "proximity": "mid"
   },
   {
-    "timestamp": 32.1,
-    "event": "player_ammo_changed",
-    "confidence": 0.73,
-    "old_value": 60,
-    "new_value": 59,
-    "delta": -1
-  },
-  {
-    "timestamp": 32.367,
-    "event": "player_ammo_changed",
-    "confidence": 0.737,
-    "old_value": 59,
-    "new_value": 56,
-    "delta": -3
-  },
-  {
     "timestamp": 32.5,
     "event": "enemy_disappeared",
     "confidence": 0.473,
@@ -878,14 +693,6 @@
     "proximity": "near"
   },
   {
-    "timestamp": 32.533,
-    "event": "player_ammo_changed",
-    "confidence": 0.553,
-    "old_value": 56,
-    "new_value": 54,
-    "delta": -2
-  },
-  {
     "timestamp": 32.633,
     "event": "enemy_disappeared",
     "confidence": 0.725,
@@ -893,14 +700,6 @@
     "class_name": "enemy",
     "bearing": -42.9,
     "proximity": "mid"
-  },
-  {
-    "timestamp": 32.7,
-    "event": "player_ammo_changed",
-    "confidence": 0.77,
-    "old_value": 54,
-    "new_value": 52,
-    "delta": -2
   },
   {
     "timestamp": 33.467,

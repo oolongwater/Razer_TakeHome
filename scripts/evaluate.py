@@ -7,6 +7,7 @@ from pathlib import Path
 
 import cv2
 
+from gameplay_events.events import HEALTH_CHANGED
 from gameplay_events.hud import HudReader, load_templates, read_hud
 from gameplay_events.matching import events_from_intervals, match_events
 
@@ -54,6 +55,8 @@ def event_scores(prediction_dir, annotation_dir, clips_dir):
         hud_path = Path(annotation_dir) / f"{clip}_hud_events.csv"
         if hud_path.exists():
             for row in load_csv(hud_path):
+                if row["event"] != HEALTH_CHANGED:
+                    continue
                 ground_truth.append({"timestamp": float(row["timestamp"]), "event": row["event"]})
         predicted = json.loads(prediction_path.read_text())
         rows = match_events(predicted, ground_truth)

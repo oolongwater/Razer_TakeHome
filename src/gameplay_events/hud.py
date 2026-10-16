@@ -11,7 +11,7 @@ from pathlib import Path
 import cv2
 import numpy as np
 
-from gameplay_events.events import AMMO_CHANGED, HEALTH_CHANGED, GameplayEvent, HudChange
+from gameplay_events.events import HEALTH_CHANGED, GameplayEvent, HudChange
 
 DIGIT_WIDTH = 14
 DIGIT_HEIGHT = 16
@@ -182,11 +182,12 @@ class HudReader:
         changes = []
         for stat, smoother, raw_value, confidence, event_name in (
             ("health", self.health_filter, reading["health"], reading["health_confidence"], HEALTH_CHANGED),
-            ("ammo", self.ammo_filter, reading["ammo"], reading["ammo_confidence"], AMMO_CHANGED),
+            ("ammo", self.ammo_filter, reading["ammo"], reading["ammo_confidence"], None),
         ):
             event, change = self._apply(stat, smoother, raw_value, confidence, time, event_name)
             if event is not None:
                 events.append(event)
+            if change is not None:
                 changes.append(change)
         return reading, events, changes
 
@@ -199,12 +200,14 @@ class HudReader:
             self.ammo = accepted
         if accepted is None or previous is None or accepted == previous:
             return None, None
-        event = GameplayEvent(
-            timestamp=time,
-            event=event_name,
-            confidence=confidence,
-            old_value=previous,
-            new_value=accepted,
-        )
+        event = None
+        if event_name is not None:
+            event = GameplayEvent(
+                timestamp=time,
+                event=event_name,
+                confidence=confidence,
+                old_value=previous,
+                new_value=accepted,
+            )
         change = HudChange(time=time, stat=stat, old_value=previous, new_value=accepted)
         return event, change

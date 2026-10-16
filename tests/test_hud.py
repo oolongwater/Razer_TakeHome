@@ -94,6 +94,21 @@ def test_template_match_reads_a_painted_counter():
     assert ink_mask(frame[DIGIT_TOP : DIGIT_TOP + DIGIT_HEIGHT, 62:76]).sum() > 0
 
 
+def test_ammo_change_feeds_pickups_but_is_not_an_event():
+    templates = load_templates()
+    reader = HudReader(templates)
+    events = changes = []
+    for index, ammo in enumerate(("50", "50", "50", "60", "60", "60")):
+        frame = np.zeros((200, 320, 3), np.uint8)
+        _paint_counter(frame, HEALTH_RIGHT, "100", templates)
+        _paint_counter(frame, AMMO_RIGHT, ammo, templates)
+        _reading, new_events, new_changes = reader.update(frame, index / 30)
+        events = events + new_events
+        changes = changes + new_changes
+    assert events == []
+    assert [(change.stat, change.old_value, change.new_value) for change in changes] == [("ammo", 50, 60)]
+
+
 def test_real_status_bar_frame_reads_starting_values():
     templates = load_templates()
     capture = cv2.VideoCapture("data/clips/Doom2_UV_lv04_028.avi")

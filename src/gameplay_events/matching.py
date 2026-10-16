@@ -6,14 +6,12 @@ from gameplay_events.events import (
     ENEMY_DISAPPEARED,
     EXPIRE_SECONDS,
     ITEM_DETECTED,
-    ITEM_DISAPPEARED,
     ITEM_PICKED_UP,
 )
 
 TOLERANCE_SECONDS = 0.5
 
 _DETECTED = {"enemy": ENEMY_DETECTED, "health_item": ITEM_DETECTED, "ammo_item": ITEM_DETECTED}
-_DISAPPEARED = {"enemy": ENEMY_DISAPPEARED, "health_item": ITEM_DISAPPEARED, "ammo_item": ITEM_DISAPPEARED}
 
 
 def events_from_intervals(rows, fps, clip_end):
@@ -21,8 +19,9 @@ def events_from_intervals(rows, fps, clip_end):
 
     Intervals of one object less than ``EXPIRE_SECONDS`` apart are one
     presence. A presence shorter than ``CONFIRM_HITS`` frames is ignored.
-    ``picked_up`` replaces a disappearance. A presence that ends within
-    ``EXPIRE_SECONDS`` of the clip does not disappear, matching ``finish``.
+    Only enemies disappear, and an enemy presence that ends within
+    ``EXPIRE_SECONDS`` of the clip does not, matching ``finish``. An item
+    ends with ``item_picked_up`` when ``picked_up`` is set.
     """
     grouped = {}
     for row in rows:
@@ -57,10 +56,11 @@ def events_from_intervals(rows, fps, clip_end):
                 continue
             events.append({"timestamp": span["first"] / fps, "event": _DETECTED[span["class_name"]]})
             end_time = span["last"] / fps
-            if span["picked_up"] and span["class_name"] != "enemy":
-                events.append({"timestamp": end_time, "event": ITEM_PICKED_UP})
+            if span["class_name"] != "enemy":
+                if span["picked_up"]:
+                    events.append({"timestamp": end_time, "event": ITEM_PICKED_UP})
             elif clip_end - end_time >= EXPIRE_SECONDS:
-                events.append({"timestamp": end_time, "event": _DISAPPEARED[span["class_name"]]})
+                events.append({"timestamp": end_time, "event": ENEMY_DISAPPEARED})
     events.sort(key=lambda event: (event["timestamp"], event["event"]))
     return events
 

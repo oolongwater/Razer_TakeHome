@@ -3,7 +3,6 @@
 import argparse
 import csv
 import json
-from collections import deque
 from pathlib import Path
 
 import cv2
@@ -19,29 +18,23 @@ CANONICAL_WIDTH = 320
 CANONICAL_HEIGHT = 200
 RENDER_SCALE = 3
 PANEL_WIDTH = 320
-TRAIL_LENGTH = 15
 TAG_SECONDS = 1.0
 
+PLAYER_COLOR = (240, 240, 240)
 CLASS_COLOR = {
     "enemy": (40, 40, 220),
     "health_item": (40, 180, 40),
     "ammo_item": (40, 200, 220),
 }
-ID_COLORS = (
-    (255, 120, 40),
-    (80, 220, 255),
-    (255, 80, 180),
-    (180, 255, 80),
-    (255, 200, 60),
-    (160, 120, 255),
-    (80, 255, 180),
-    (255, 160, 120),
-)
+CLASS_LABEL = {
+    "enemy": "Enemy",
+    "health_item": "Health item",
+    "ammo_item": "Ammo item",
+}
 TAG_TEXT = {
     "enemy_detected": "DETECTED",
     "item_detected": "DETECTED",
     "enemy_disappeared": "GONE",
-    "item_disappeared": "GONE",
     "item_picked_up": "PICKED UP",
 }
 
@@ -80,15 +73,11 @@ def write_events(events, output_dir):
     return json_path, csv_path
 
 
-def _id_color(track_id):
-    return ID_COLORS[int(track_id) % len(ID_COLORS)]
-
-
 def _scaled_box(bbox):
     return [int(round(value * RENDER_SCALE)) for value in bbox]
 
 
-def _draw_overlay(frame, detections, hud_state, recent_events, blips, builder, trails, tags):
+def _draw_overlay(frame, detections, hud_state, recent_events, blips, builder, tags):
     view = cv2.resize(
         frame,
         (CANONICAL_WIDTH * RENDER_SCALE, CANONICAL_HEIGHT * RENDER_SCALE),
@@ -104,15 +93,8 @@ def _draw_overlay(frame, detections, hud_state, recent_events, blips, builder, t
         if pending:
             label = f"pending {display_id}"
         else:
-            label = f"{detection.class_name} {display_id} {detection.confidence:.2f}"
+            label = f"{CLASS_LABEL[detection.class_name]} {display_id} {detection.confidence:.2f}"
         cv2.putText(view, label, (x1, max(14, y1 - 4)), cv2.FONT_HERSHEY_SIMPLEX, 0.4, color, 1, cv2.LINE_AA)
-        points = trails.get(display_id)
-        if points and len(points) > 1:
-            poly = np.array(
-                [(int(round(x * RENDER_SCALE)), int(round(y * RENDER_SCALE))) for x, y in points],
-                dtype=np.int32,
-            )
-            cv2.polylines(view, [poly], False, _id_color(display_id), 2, cv2.LINE_AA)
     for tag in tags:
         if tag["bbox"] is None:
             cv2.putText(view, tag["text"], (16, 28), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (40, 220, 255), 2, cv2.LINE_AA)
@@ -125,21 +107,21 @@ def _draw_overlay(frame, detections, hud_state, recent_events, blips, builder, t
     )
     draw_radar(view, blips, origin, radius=RADAR_RADIUS)
     health = "--" if hud_state.get("health") is None else str(hud_state["health"])
-    ammo = "--" if hud_state.get("ammo") is None else str(hud_state["ammo"])
     cv2.putText(
         view,
-        f"HP {health}  AMMO {ammo}",
+        f"Player HP {health}",
         (8, CANONICAL_HEIGHT * RENDER_SCALE - 16),
         cv2.FONT_HERSHEY_SIMPLEX,
         0.5,
-        (240, 240, 240),
+        PLAYER_COLOR,
         1,
         cv2.LINE_AA,
     )
     panel = np.full((view.shape[0], PANEL_WIDTH, 3), 24, dtype=np.uint8)
     cv2.putText(panel, "events", (12, 24), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (230, 230, 230), 1, cv2.LINE_AA)
     legend_y = 48
-    for name, color in CLASS_COLOR.items():
+    legend = [("Player", PLAYER_COLOR)] + [(CLASS_LABEL[name], color) for name, color in CLASS_COLOR.items()]
+    for name, color in legend:
         cv2.rectangle(panel, (12, legend_y - 10), (26, legend_y + 2), color, -1)
         cv2.putText(panel, name, (34, legend_y), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (210, 210, 210), 1, cv2.LINE_AA)
         legend_y += 18
@@ -192,7 +174,6 @@ def analyze_video(video_path, weights, output_dir, conf=0.1, imgsz=416, read_hud
     writer = None
     screenshots = 0
     recent = []
-    trails = {}
     tags = []
     frame_index = 0
 
@@ -220,15 +201,7 @@ def analyze_video(video_path, weights, output_dir, conf=0.1, imgsz=416, read_hud
         new_events = hud_events + new_builder_events
         recent.extend(new_events)
         for detection in detections:
-            display_id = builder.display_id(detection.track_id)
-            center = (
-                (detection.bbox[0] + detection.bbox[2]) / 2.0,
-                (detection.bbox[1] + detection.bbox[3]) / 2.0,
-            )
-            trails.setdefault(display_id, deque(maxlen=TRAIL_LENGTH)).append(center)
-            seen_boxes[display_id] = detection.bbox
-        if flash:
-            tags.append({"text": "PICKUP FLASH", "bbox": None, "until": time + TAG_SECONDS})
+            seen_boxes[builder.display_id(detection.track_id)] = detection.bbox
         for event in new_builder_events:
             label = TAG_TEXT.get(event.event)
             if label is None:
@@ -243,7 +216,7 @@ def analyze_video(video_path, weights, output_dir, conf=0.1, imgsz=416, read_hud
         tags[:] = [tag for tag in tags if tag["until"] >= time]
         if save_video or screenshots < 8:
             blips = enemy_blips(detections)
-            canvas = _draw_overlay(frame, detections, hud_state, recent, blips, builder, trails, tags)
+            canvas = _draw_overlay(frame, detections, hud_state, recent, blips, builder, tags)
             if save_video:
                 if writer is None:
                     writer = cv2.VideoWriter(

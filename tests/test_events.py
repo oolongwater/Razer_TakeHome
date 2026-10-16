@@ -79,8 +79,8 @@ def test_item_leaving_the_view_is_not_a_pickup():
     frames = [(index, index / 30, [detection(index, index / 30, 4, "ammo_item", far)], []) for index in range(3)]
     frames.append((20, 0.8, [], []))
     run_frames(builder, frames)
-    assert not any(event.event == ITEM_PICKED_UP for event in builder.events)
-    assert any(event.event == ITEM_DETECTED for event in builder.events)
+    builder.finish(0.8)
+    assert [event.event for event in builder.events] == [ITEM_DETECTED]
 
 
 def test_item_expiring_in_the_pickup_zone_without_a_flash_is_not_a_pickup():

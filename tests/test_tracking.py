@@ -24,8 +24,7 @@ def test_overlay_adds_a_side_panel():
         {"health": 100, "ammo": 50},
         [],
         [],
-        builder,
-        {3: [(35, 55), (36, 56)]},
+            builder,
         [{"text": "DETECTED", "bbox": detection.bbox, "until": 1.0}],
     )
     assert canvas.shape == (600, 1280, 3)
