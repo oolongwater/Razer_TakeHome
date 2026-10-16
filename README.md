@@ -94,7 +94,7 @@ All of it is public. Nothing here was rendered for this project.
 
 Detection scores are precision, recall, and F1 at IoU 0.5 on the CocoDoom test maps (5,804 images, maps the detector never trained on), plus Ultralytics mAP50. Event scores match each hand-labeled event to one prediction of the same type within ±0.5 s. OCR scores compare health and ammo read off the status bar once a second, for the raw digit match and for the 3-frame filter.
 
-`scripts/evaluate.py` writes `outputs/metrics.json`. Each clip also has `outputs/<clip>/events.json`, `events.csv`, `annotated.mp4`, and a few screenshots.
+`scripts/evaluate.py` writes `outputs/metrics.json`. Each clip also has `outputs/<clip>/events.json`, `events.csv`, and `annotated.mp4`.
 
 ### Detection
 
@@ -156,23 +156,6 @@ Hand labels:
 - **Intermission.** Frames whose status bar does not match the HEALTH label are ignored, so the tally screen does not add enemies or items.
 - **Radar.** Bearing assumes a 90-degree view and a centred player. Proximity is sprite height, so a lost soul and a baron at the same distance are not the same band.
 
-## Demo
-
-[outputs/Doom2_UV_lv04_028/demo.mp4](outputs/Doom2_UV_lv04_028/demo.mp4) is MAP04 with the frozen pipeline. It is H.264, 1280×600, 30 fps, 932 frames (31 s). The left side is the view. The right side lists the colours for Player, Enemy, Health item, and Ammo item, running counts, and the last 12 events. The player's health is printed at the bottom left of the view.
-
-What to watch:
-
-- **8.7 s.** Enemy 169 is confirmed. The box sits on the demon, the label shows the class, the id, and the confidence, and a DETECTED tag is on the sprite. A health item beside it has its own box.
-- **10.2 s.** The player has turned, and the view is tinted yellow by a pickup flash. Id 169 is still open: `events.json` has no `enemy_disappeared` for it until 10.8 s.
-- **10.9 s.** Id 169 leaves. A GONE tag sits on its last box, and `events.json` has `enemy_disappeared` for id 169 at 10.8 s.
-
-![Enemy 169 detected](outputs/Doom2_UV_lv04_028/demo_detect.png)
-
-![Id 169 held through the turn](outputs/Doom2_UV_lv04_028/demo_track.png)
-
-![Id 169 gone](outputs/Doom2_UV_lv04_028/demo_event.png)
-
-Tracks that have not yet been seen in 3 of 5 frames are drawn thin and gray, labeled pending. Confirmed boxes use the class colour. A stitched fragment keeps its parent's number.
 
 ## Reproduce
 

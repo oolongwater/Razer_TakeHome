@@ -172,7 +172,6 @@ def analyze_video(video_path, weights, output_dir, conf=0.1, imgsz=416, read_hud
     flashes = FlashDetector()
     hud = HudReader() if read_hud else None
     writer = None
-    screenshots = 0
     recent = []
     tags = []
     frame_index = 0
@@ -214,21 +213,17 @@ def analyze_video(video_path, weights, output_dir, conf=0.1, imgsz=416, read_hud
                 }
             )
         tags[:] = [tag for tag in tags if tag["until"] >= time]
-        if save_video or screenshots < 8:
+        if save_video:
             blips = enemy_blips(detections)
             canvas = _draw_overlay(frame, detections, hud_state, recent, blips, builder, tags)
-            if save_video:
-                if writer is None:
-                    writer = cv2.VideoWriter(
-                        str(output_dir / "annotated.mp4"),
-                        cv2.VideoWriter_fourcc(*"mp4v"),
-                        fps,
-                        (canvas.shape[1], canvas.shape[0]),
-                    )
-                writer.write(canvas)
-            if new_events and screenshots < 8:
-                cv2.imwrite(str(output_dir / f"frame_{frame_index:05d}.png"), canvas)
-                screenshots += 1
+            if writer is None:
+                writer = cv2.VideoWriter(
+                    str(output_dir / "annotated.mp4"),
+                    cv2.VideoWriter_fourcc(*"mp4v"),
+                    fps,
+                    (canvas.shape[1], canvas.shape[0]),
+                )
+            writer.write(canvas)
         if frame_index % 200 == 0:
             print(f"{video_path.name} frame {frame_index}", flush=True)
         frame_index += 1
